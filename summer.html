@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Node.js CRUD</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h2 class="mb-4">Create User</h2>
+    <form action="/users" method="POST" class="card p-4 shadow-sm">
+      <div class="mb-3">
+        <label class="form-label">Name</label>
+        <input type="text" name="name" class="form-control" placeholder="Enter name" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" placeholder="Enter email" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Phone No</label>
+        <input type="text" name="phone_no" class="form-control" placeholder="Enter phone number" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Age</label>
+        <input type="number" name="age" class="form-control" placeholder="Enter age" required />
+      </div>
+      <button type="submit" class="btn btn-primary">Add User</button>
+    </form>
+
+    <hr class="my-5" />
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2>All Users</h2>
+      <button onclick="fetchUsers()" class="btn btn-outline-success">Load Users</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped" id="userTable">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone No</th>
+            <th>Age</th>
+          </tr>
+        </thead>
+        <tbody id="userBody">
+          <!-- User rows will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function fetchUsers() {
+      fetch('/users')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('userBody');
+          tbody.innerHTML = '';
+          data.forEach(user => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${user.id}</td>
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td>${user.phone_no}</td>
+                <td>${user.age}</td>
+              </tr>
+            `;
+          });
+        });
+    }
+  </script>
+</body>
+</html>

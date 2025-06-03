@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Node.js CRUD</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h2 class="mb-4">Create User</h2>
+    <form id="createForm" class="card p-4 shadow-sm">
+      <div class="mb-3">
+        <label class="form-label">Name</label>
+        <input type="text" name="name" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Phone No</label>
+        <input type="text" name="phone_no" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Age</label>
+        <input type="number" name="age" class="form-control" required />
+      </div>
+      <button type="submit" class="btn btn-primary">Add User</button>
+    </form>
+
+    <hr class="my-5" />
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2>All Users</h2>
+      <button onclick="fetchUsers()" class="btn btn-outline-success">Load Users</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone No</th>
+            <th>Age</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="editForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editId">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" id="editName" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" id="editEmail" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone No</label>
+            <input type="text" id="editPhone" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Age</label>
+            <input type="number" id="editAge" class="form-control" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Load users into the table
+    function fetchUsers() {
+      fetch('/users')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('userBody');
+          tbody.innerHTML = '';
+          data.forEach(user => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${user.id}</td>
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td>${user.phone_no}</td>
+                <td>${user.age}</td>
+                <td>
+                  <button class="btn btn-warning btn-sm" onclick="openEditModal(${user.id}, '${user.name}', '${user.email}', '${user.phone_no}', ${user.age})">Edit</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Delete</button>
+                </td>
+              </tr>
+            `;
+          });
+        });
+    }
+
+    // Create new user
+    document.getElementById('createForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        name: form.name.value,
+        email: form.email.value,
+        phone_no: form.phone_no.value,
+        age: form.age.value
+      };
+
+      fetch('/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => {
+        if (res.ok) {
+          form.reset();
+          alert('User created successfully!');
+          fetchUsers();
+        }
+      });
+    });
+
+    // Open modal with user data
+    function openEditModal(id, name, email, phone, age) {
+      document.getElementById('editId').value = id;
+      document.getElementById('editName').value = name;
+      document.getElementById('editEmail').value = email;
+      document.getElementById('editPhone').value = phone;
+      document.getElementById('editAge').value = age;
+      new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+
+    // Submit update form
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const data = {
+        name: document.getElementById('editName').value,
+        email: document.getElementById('editEmail').value,
+        phone_no: document.getElementById('editPhone').value,
+        age: document.getElementById('editAge').value
+      };
+
+      fetch(`/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => {
+        if (res.ok) {
+          fetchUsers();
+          bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+          alert('User update successfully!');
+        }
+      });
+    });
+
+    // Delete user
+    function deleteUser(id) {
+      if (confirm('Are you sure you want to delete this user?')) {
+        fetch(`/users/${id}`, { method: 'DELETE' })
+          .then(res => {
+            if (res.ok) fetchUsers();
+          });
+      }
+    }
+  </script>
+</body>
+</html>
