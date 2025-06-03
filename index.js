@@ -112,16 +112,6 @@ app.get('/users/:id', (req, res) => {
 });
 
 // UPDATE
-// app.post('/users/:id', (req, res) => {
-//   const { name, email, phone_no, age } = req.body;
-//   const { id } = req.params;
-//   db.query('UPDATE users SET name = ?, email = ?, phone_no = ?, age = ? WHERE id = ?', 
-//     [name, email, phone_no, age, id], 
-//     (err) => {
-//       if (err) return res.send('Error updating user');
-//       res.redirect('/');
-//     });
-// });
 app.put('/users/:id', (req, res) => {
   const { name, email, phone_no, age } = req.body;
   const { id } = req.params;
