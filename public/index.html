@@ -10,7 +10,9 @@
 <body class="bg-light">
   <div class="container mt-5">
     <h2 class="mb-4">Create User</h2>
-    <form id="createForm" class="card p-4 shadow-sm">
+    <!-- <form id="createForm" class="card p-4 shadow-sm"> -->
+      <form id="createForm" class="card p-4 shadow-sm" enctype="multipart/form-data">
+
       <div class="mb-3">
         <label class="form-label">Name</label>
         <input type="text" name="name" class="form-control" required />
@@ -22,6 +24,10 @@
       <div class="mb-3">
         <label class="form-label">Phone No</label>
         <input type="text" name="phone_no" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Profile Image</label>
+        <input type="file" name="image" class="form-control" accept="image/*"/>
       </div>
       <div class="mb-3">
         <label class="form-label">Age</label>
@@ -45,19 +51,28 @@
             <th>Name</th>
             <th>Email</th>
             <th>Phone No</th>
+            <th>Image</th>
             <th>Age</th>
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="userBody"></tbody>
+        <tbody id="userBody">
+        </tbody>
       </table>
+       <!-- Pagination controls go here -->
+      <div class="d-flex justify-content-center align-items-center mt-3">
+        <button onclick="prevPage()" class="btn btn-outline-secondary btn-sm me-2">Prev</button>
+        <span id="pageInfo" class="mx-2">Page 1</span>
+        <button onclick="nextPage()" class="btn btn-outline-secondary btn-sm ms-2">Next</button>
+      </div>
     </div>
   </div>
 
   <!-- Edit Modal -->
   <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-      <form class="modal-content" id="editForm">
+      <!-- <form class="modal-content" id="editForm"> -->
+        <form class="modal-content" id="editForm" enctype="multipart/form-data">
         <div class="modal-header">
           <h5 class="modal-title">Edit User</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -77,6 +92,11 @@
             <input type="text" id="editPhone" class="form-control" required />
           </div>
           <div class="mb-3">
+            <label class="form-label">Current Image</label><br />
+            <img id="editPreview" src="" width="80" height="80" class="mb-2" />
+            <input type="file" id="editImage" class="form-control" name="image" accept="image/*" />
+          </div>
+          <div class="mb-3">
             <label class="form-label">Age</label>
             <input type="number" id="editAge" class="form-control" required />
           </div>
@@ -90,45 +110,68 @@
 
   <script>
     // Load users into the table
-    function fetchUsers() {
-      fetch('/users')
+    let currentPage = 1;
+    let totalPages = 1;
+
+    function fetchUsers(page = 1) {
+      fetch(`/users?page=${page}&limit=10`)
         .then(res => res.json())
         .then(data => {
           const tbody = document.getElementById('userBody');
           tbody.innerHTML = '';
-          data.forEach(user => {
+
+          data.users.forEach(user => {
             tbody.innerHTML += `
               <tr>
                 <td>${user.id}</td>
                 <td>${user.name}</td>
                 <td>${user.email}</td>
                 <td>${user.phone_no}</td>
+                <td><img src="/uploads/${user.image}" alt="Profile" width="50" height="50"/></td>
                 <td>${user.age}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm" onclick="openEditModal(${user.id}, '${user.name}', '${user.email}', '${user.phone_no}', ${user.age})">Edit</button>
+                  <button class="btn btn-warning btn-sm" 
+                    onclick="openEditModal(${user.id}, '${user.name}', '${user.email}', '${user.phone_no}', ${user.age}, '${user.image}')">
+                    Edit
+                  </button>
                   <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Delete</button>
                 </td>
               </tr>
             `;
           });
+
+          currentPage = data.currentPage;
+          totalPages = data.totalPages;
+          document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
         });
     }
+
+    function nextPage() {
+      if (currentPage < totalPages) {
+        fetchUsers(currentPage + 1);
+      }
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        fetchUsers(currentPage - 1);
+      }
+    }
+
+    // Call initially
+    fetchUsers();
+
 
     // Create new user
     document.getElementById('createForm').addEventListener('submit', function(e) {
       e.preventDefault();
+
       const form = e.target;
-      const data = {
-        name: form.name.value,
-        email: form.email.value,
-        phone_no: form.phone_no.value,
-        age: form.age.value
-      };
+      const formData = new FormData(form);
 
       fetch('/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: formData // no need for headers
       }).then(res => {
         if (res.ok) {
           form.reset();
@@ -139,35 +182,64 @@
     });
 
     // Open modal with user data
-    function openEditModal(id, name, email, phone, age) {
+    function openEditModal(id, name, email, phone, age, image) {
       document.getElementById('editId').value = id;
       document.getElementById('editName').value = name;
       document.getElementById('editEmail').value = email;
       document.getElementById('editPhone').value = phone;
       document.getElementById('editAge').value = age;
+      document.getElementById('editPreview').src = `/uploads/${image}`;
       new bootstrap.Modal(document.getElementById('editModal')).show();
     }
 
     // Submit update form
-    document.getElementById('editForm').addEventListener('submit', function(e) {
+    // document.getElementById('editForm').addEventListener('submit', function(e) {
+    //   e.preventDefault();
+    //   const id = document.getElementById('editId').value;
+    //   const data = {
+    //     name: document.getElementById('editName').value,
+    //     email: document.getElementById('editEmail').value,
+    //     phone_no: document.getElementById('editPhone').value,
+    //     age: document.getElementById('editAge').value
+    //   };
+
+    //   fetch(`/users/${id}`, {
+    //     method: 'PUT',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(data)
+    //   }).then(res => {
+    //     if (res.ok) {
+    //       fetchUsers();
+    //       bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+    //       alert('User update successfully!');
+    //     }
+    //   });
+    // });
+
+
+    document.getElementById('editForm').addEventListener('submit', function (e) {
       e.preventDefault();
+
       const id = document.getElementById('editId').value;
-      const data = {
-        name: document.getElementById('editName').value,
-        email: document.getElementById('editEmail').value,
-        phone_no: document.getElementById('editPhone').value,
-        age: document.getElementById('editAge').value
-      };
+      const formData = new FormData();
+      formData.append('name', document.getElementById('editName').value);
+      formData.append('email', document.getElementById('editEmail').value);
+      formData.append('phone_no', document.getElementById('editPhone').value);
+      formData.append('age', document.getElementById('editAge').value);
+
+      const imageFile = document.getElementById('editImage').files[0];
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
 
       fetch(`/users/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: formData
       }).then(res => {
         if (res.ok) {
           fetchUsers();
           bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-          alert('User update successfully!');
+          alert('User updated successfully!');
         }
       });
     });
