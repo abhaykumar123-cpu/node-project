@@ -32,18 +32,6 @@ app.get('/', (req, res) => {
 });
 
 // CREATE
-// app.post('/users', (req, res) => {
-//   const { name, email, phone_no, age, image } = req.body;
-//   if (!name || !email || !phone_no || !age || !image) {
-//     return res.send('All fields are required');
-//   }
-
-//   const sql = 'INSERT INTO users (name, email, phone_no, age, image) VALUES (?, ?, ?, ?, ?)';
-//   db.query(sql, [name, email, phone_no, age, image], (err) => {
-//     if (err) return res.send('Database error');
-//     res.redirect('/');
-//   });
-// });
 
 app.post('/users', upload.single('image'), (req, res) => {
   const { name, email, phone_no, age } = req.body;
@@ -140,8 +128,6 @@ app.delete('/users/:id', (req, res) => {
     res.send('User deleted successfully');
   });
 });
-
-
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
