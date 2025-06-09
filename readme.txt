@@ -10,6 +10,9 @@ http://localhost:3000/qr
 
 that url is used to generat the qr code.
 
+http://localhost:3000/contact
+
+on this page contact form is created to send email to admin
 
 Important -> 
 

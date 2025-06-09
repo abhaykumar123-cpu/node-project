@@ -1,9 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const db = require('./db');
+const db = require('./config/db');
 const QRCode = require('qrcode');
-
+const sendContactEmail = require('./mailer');
 const app = express();
 const port = 3000;
 
@@ -29,11 +29,17 @@ app.use(express.static('public')); // serve static files like index.html
 
 // Serve HTML form
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 app.get('/qr', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'qr.html'));
+  res.sendFile(path.join(__dirname, 'views', 'qr.html'));
+});
+app.get('/contact', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'contact.html'));
+});
+app.get('/expense', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'expense.html'));
 });
 
 // CREATE
@@ -91,19 +97,6 @@ app.get('/users/:id', (req, res) => {
 });
 
 // UPDATE
-// app.put('/users/:id', (req, res) => {
-//   const { name, email, phone_no, age } = req.body;
-//   // const image = req.file ? req.file.filename : null;
-//   const { id } = req.params;
-
-//   const sql = 'UPDATE users SET name = ?, email = ?, phone_no = ?, age = ? WHERE id = ?';
-//   db.query(sql, [name, email, phone_no, age, id,], (err, result) => {
-//     if (err) return res.status(500).json({ error: 'Update failed' });
-//     res.json({ message: 'User updated successfully' });
-//   });
-// });
-
-
 app.put('/users/:id', upload.single('image'), (req, res) => {
   const { name, email, phone_no, age } = req.body;
   const { id } = req.params;
@@ -134,13 +127,8 @@ app.delete('/users/:id', (req, res) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});
 
-
-
-
+// QR Code 
 app.post('/generate-qr', (req, res) => {
   const text = req.body.qrdata;
 
@@ -161,3 +149,29 @@ app.post('/generate-qr', (req, res) => {
     res.redirect(`/qrcodes/${filename}`);
   });
 });
+
+
+
+// POST /send-email
+app.post('/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body;
+
+  if (!name || !email || !subject || !message) {
+    return res.send('All fields are required.');
+  }
+
+  try {
+    await sendContactEmail(name, email, subject, message);
+    res.send('Message sent successfully!');
+  } catch (err) {
+    console.error(err);
+    res.send('Failed to send message.');
+  }
+});
+
+
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
+
+
