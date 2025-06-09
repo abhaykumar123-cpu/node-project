@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const db = require('./db');
+const QRCode = require('qrcode');
 
 const app = express();
 const port = 3000;
@@ -29,6 +30,10 @@ app.use(express.static('public')); // serve static files like index.html
 // Serve HTML form
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/qr', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'qr.html'));
 });
 
 // CREATE
@@ -133,3 +138,26 @@ app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
 
+
+
+
+app.post('/generate-qr', (req, res) => {
+  const text = req.body.qrdata;
+
+  if (!text) return res.send('Text is required');
+
+  const filename = `qr_${Date.now()}.png`;
+  const filepath = path.join(__dirname, 'public/qrcodes', filename);
+
+  // Ensure directory exists
+  const fs = require('fs');
+  const dir = path.join(__dirname, 'public/qrcodes');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+  QRCode.toFile(filepath, text, function (err) {
+    if (err) return res.send('Failed to generate QR code');
+
+    // Redirect to show image
+    res.redirect(`/qrcodes/${filename}`);
+  });
+});
