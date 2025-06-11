@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Unit Converter</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-light">
+  <nav>
+    <a href="/">Home</a> |
+    <a href="/qr">QR Code</a> |
+    <!-- <a href="/expense">Expense</a> | -->
+    <a href="/unit">Unit Converter</a> |
+    <a href="/contact">Contact</a>
+  </nav>
+
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-body">
+            <h4 class="card-title text-center mb-4">Unit Converter</h4>
+            <form id="convertForm">
+              <div class="mb-3">
+                <label for="value" class="form-label">Enter Value</label>
+                <input type="number" name="value" class="form-control" placeholder="Enter value" required />
+              </div>
+              <div class="mb-3">
+                <label for="unit" class="form-label">Select Unit</label>
+                <select name="unit" class="form-select">
+                  <option value="meters">Meters</option>
+                  <option value="kilograms">Kilograms</option>
+                  <option value="celsius">Celsius</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Convert</button>
+            </form>
+
+            <div class="result mt-4" id="resultBox"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (optional for some components) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const form = document.getElementById('convertForm');
+    const resultBox = document.getElementById('resultBox');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const data = {
+        value: formData.get('value'),
+        unit: formData.get('unit')
+      };
+
+      const response = await fetch('/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      // Display result
+      if (result.error) {
+        resultBox.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
+      } else {
+        let html = '<div class="alert alert-info"><h5>Converted Values:</h5><ul class="mb-0">';
+        for (let key in result) {
+          html += `<li><strong>${key}</strong>: ${result[key]}</li>`;
+        }
+        html += '</ul></div>';
+        resultBox.innerHTML = html;
+      }
+    });
+  </script>
+
+</body>
+</html>

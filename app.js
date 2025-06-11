@@ -41,6 +41,10 @@ app.get('/contact', (req, res) => {
 app.get('/expense', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'expense.html'));
 });
+app.get('/unit', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'unit.html'));
+});
+
 
 // CREATE
 
@@ -167,6 +171,41 @@ app.post('/contact', async (req, res) => {
     console.error(err);
     res.send('Failed to send message.');
   }
+});
+
+
+
+app.post('/convert', (req, res) => {
+  const { value, unit } = req.body;
+  const num = parseFloat(value);
+
+  let result = {};
+
+  switch (unit) {
+    case 'meters':
+      result = {
+        kilometers: (num / 1000).toFixed(2),
+        feet: (num * 3.281).toFixed(2),
+        inches: (num * 39.37).toFixed(2),
+      };
+      break;
+    case 'kilograms':
+      result = {
+        grams: (num * 1000).toFixed(2),
+        pounds: (num * 2.2046).toFixed(2),
+      };
+      break;
+    case 'celsius':
+      result = {
+        fahrenheit: ((num * 9) / 5 + 32).toFixed(2),
+        kelvin: (num + 273.15).toFixed(2),
+      };
+      break;
+    default:
+      result = { error: 'Invalid unit' };
+  }
+
+  res.json(result);
 });
 
 
